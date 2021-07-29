@@ -1,0 +1,78 @@
+#include <iostream>
+#include <algorithm>
+#include <cstdlib>
+
+using namespace std;
+
+struct Node {
+    int x, y, high = 1;
+    Node *left = nullptr, *right = nullptr;
+
+    Node(int a) {
+        x = a;
+        y = rand();
+    }
+};
+
+int high(Node *&T) {
+    return T ? T->high : 0;
+}
+
+void update(Node *&T) {
+    if (T) {
+        T->high = 1 + high(T->left) + high(T->right);
+    }
+}
+
+pair<Node *, Node *> split(Node *&T, int x0) {
+    if (T == nullptr) {
+        return {nullptr, nullptr};
+    } else if (high(T->left) + 1 <= x0) {
+        auto[L1, R1] = split(T->right, x0 - high(T->left) - 1);
+        T->right = L1;
+        update(T);
+        return {T, R1};
+    } else {
+        auto[L1, R1] = split(T->left, x0);
+        T->left = R1;
+        update(T);
+        return {L1, T};
+    }
+}
+
+Node *merge(Node *&L, Node *&R) {
+    if (L == nullptr) {
+        update(R);
+        return R;
+    }
+    if (R == nullptr) {
+        update(L);
+        return L;
+    }
+    if (L->y >= R->y) {
+        L->right = merge(L->right, R);
+        update(L);
+        return L;
+    } else {
+        R->left = merge(L, R->left);
+        update(R);
+        return R;
+    }
+}
+
+void add(Node *&Tree, int x0, int pos) {
+    auto[L, R] = split(Tree, pos);
+    Node *t = new Node(x0);
+    Tree = merge(L, t);
+    Tree = merge(Tree, R);
+}
+
+void out_order(Node *&Tree) {
+    if (Tree->left != nullptr) {
+        out_order(Tree->left);
+    }
+    cout << Tree->x << ' ';
+    if (Tree->right != nullptr) {
+        out_order(Tree->right);
+    }
+}
